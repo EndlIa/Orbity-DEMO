@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orbity.dev/spec/0.1/composition.schema.json",
+  "title": "Orbity Composition",
+  "description": "A pinned assembly document. Every instance resolves by content digest; no ranges on disk.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec", "units", "instances"],
+  "properties": {
+    "spec": { "const": "orbity/0.1" },
+    "units": { "enum": ["m", "cm", "mm", "in"] },
+    "seed": { "type": "integer" },
+    "env": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "preset": { "type": "string" },
+        "toneMapping": { "enum": ["none", "linear", "reinhard", "cineon", "aces"] },
+        "exposure": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "camera": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pos": { "$ref": "#/$defs/vec3" },
+        "target": { "$ref": "#/$defs/vec3" },
+        "fov": { "type": "number", "exclusiveMinimum": 0, "maximum": 180 }
+      }
+    },
+    "instances": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["bundle", "version", "integrity"],
+        "properties": {
+          "bundle": {
+            "type": "string",
+            "pattern": "^[a-z0-9]([a-z0-9._-]{0,62})/[a-z0-9]([a-z0-9._-]{0,62})$"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$",
+            "description": "Informational. A mismatch against the resolved manifest is a hard failure."
+          },
+          "integrity": { "$ref": "#/$defs/integrity" },
+          "transform": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "pos": { "$ref": "#/$defs/vec3" },
+              "rot": {
+                "type": "array",
+                "items": { "type": "number" },
+                "minItems": 3,
+                "maxItems": 3,
+                "description": "Euler XYZ in degrees"
+              },
+              "scale": { "$ref": "#/$defs/vec3" }
+            }
+          },
+          "params": {
+            "type": "object",
+            "description": "Keys must exist in the bundle's manifest params; unknown keys are a hard failure"
+          },
+          "attach": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["to", "socket"],
+            "properties": {
+              "to": { "type": "integer", "minimum": 0 },
+              "socket": { "type": "string" },
+              "pos": { "$ref": "#/$defs/vec3" }
+            },
+            "description": "to MUST reference an earlier instance index. Checked by conformance, not by this schema."
+          },
+          "seed": { "type": "integer" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "integrity": {
+      "type": "string",
+      "pattern": "^sha256-[A-Za-z0-9+/]{43}=$"
+    },
+    "vec3": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 3,
+      "maxItems": 3
+    }
+  }
+}

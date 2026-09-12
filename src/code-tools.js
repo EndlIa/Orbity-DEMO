@@ -1,0 +1,3 @@
+import {parse} from '@babel/parser';
+export function extractSymbols(source){const ast=parse(source,{sourceType:'module',plugins:['typescript'],errorRecovery:true});const out=[];for(const statement of ast.program.body){const node=statement.declaration||statement;if(['FunctionDeclaration','ClassDeclaration','TSInterfaceDeclaration','TSTypeAliasDeclaration','TSEnumDeclaration'].includes(node.type)&&node.id)out.push({name:node.id.name,kind:node.type==='FunctionDeclaration'?'function':node.type==='ClassDeclaration'?'class':'type',line:node.loc.start.line})}return out}
+export function findLines(source,query){const q=query.trim().toLocaleLowerCase();if(!q)return [];return source.split('\n').flatMap((line,i)=>line.toLocaleLowerCase().includes(q)?[i+1]:[])}

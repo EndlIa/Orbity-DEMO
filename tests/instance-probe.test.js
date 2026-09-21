@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import * as THREE from 'three';
+import {probeInstances} from '../src/instance-probe.js';import {createModelInstance} from '../src/model-adapter.js';
+test('probe detects shared resources destroyed by another instance',()=>{const geometry=new THREE.BoxGeometry();const material=new THREE.MeshBasicMaterial();const report=probeInstances(()=>createModelInstance(()=>new THREE.Mesh(geometry,material)));assert.equal(report.status,'review-required');assert.equal(report.checks.otherInstanceResourcesDisposed,2);});
+test('probe accepts independent instance lifecycle and records unknown units',()=>{const report=probeInstances(()=>createModelInstance(()=>new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial())));assert.equal(report.status,'checks-passed');assert.equal(report.observations.initialBounds.units,'unconfirmed');});

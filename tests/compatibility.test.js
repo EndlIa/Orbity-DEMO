@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {assessAsset} from '../src/compatibility.js';
+test('兼容性报告区分运行时证据和未实现能力',()=>{const rows=assessAsset({source:'',model:{userData:{sculptRuntime:{nodes:{}},tick(){}}}});assert.equal(rows.find(x=>x.label==='组件结构').status,'detected');assert.equal(rows.find(x=>x.label==='参数能力').status,'deferred');assert.equal(rows.find(x=>x.label==='协议状态').status,'missing')});

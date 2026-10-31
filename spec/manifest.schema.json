@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orbity.dev/spec/0.1/manifest.schema.json",
+  "title": "Orbity Bundle Manifest",
+  "description": "The only interface a host is allowed to read. A bundle is a component, never an application.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec", "id", "version", "entry", "units", "bounds", "capabilities", "license"],
+  "properties": {
+    "spec": { "const": "orbity/0.1" },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]([a-z0-9._-]{0,62})/[a-z0-9]([a-z0-9._-]{0,62})$",
+      "description": "owner/name, lowercase, registry-unique"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$",
+      "description": "Informational identity. Content is referenced by integrity, never by range."
+    },
+    "entry": {
+      "type": "string",
+      "pattern": "^[^/].*\\.(m?js|ts)$",
+      "description": "Module exporting create() returning { root, tick?, dispose }. Never an HTML file."
+    },
+    "units": { "enum": ["m", "cm", "mm", "in"] },
+    "bounds": {
+      "type": "array",
+      "items": { "type": "number", "minimum": 0 },
+      "minItems": 3,
+      "maxItems": 3,
+      "description": "AABB half-extents in `units`, for auto-framing and thumbnail framing"
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["edit", "ownsWorld"],
+      "properties": {
+        "edit": { "enum": ["params", "sockets", "static"] },
+        "ownsWorld": { "const": false },
+        "tick": { "type": "boolean", "default": false }
+      }
+    },
+    "params": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/param" },
+      "description": "Present only for edit=params. Never inferred from source."
+    },
+    "sockets": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/socket" } },
+    "pivots": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "pos"],
+        "properties": {
+          "name": { "$ref": "#/$defs/name" },
+          "pos": { "$ref": "#/$defs/vec3" },
+          "axis": { "$ref": "#/$defs/vec3" }
+        }
+      }
+    },
+    "colliders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "shape", "size"],
+        "properties": {
+          "name": { "$ref": "#/$defs/name" },
+          "shape": { "enum": ["box", "sphere", "capsule"] },
+          "size": { "$ref": "#/$defs/vec3" }
+        }
+      },
+      "description": "Declared-only in 0.1. Hosts must not consume these yet."
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "prefersEnv": { "type": "string" } },
+      "description": "Advisory only. A bundle never owns lighting or tone mapping."
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "generator": { "type": "string" },
+        "generatorVersion": { "type": "string" },
+        "sourceImageDigest": { "type": "string" },
+        "gates": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["passed", "total"],
+          "properties": {
+            "passed": { "type": "integer", "minimum": 0 },
+            "total": { "type": "integer", "minimum": 1 },
+            "profile": { "type": "string" }
+          }
+        },
+        "notes": { "type": "string" }
+      },
+      "description": "Surfaced by the registry as search and trust metadata"
+    },
+    "deps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "integrity"],
+        "properties": {
+          "id": { "type": "string" },
+          "integrity": { "$ref": "#/$defs/integrity" }
+        }
+      },
+      "description": "Pinned. A bundle never asks the host to resolve a range."
+    },
+    "license": { "type": "string", "minLength": 1, "description": "SPDX identifier" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "capabilities": { "properties": { "edit": { "const": "params" } } } } },
+      "then": { "required": ["params"] }
+    },
+    {
+      "if": { "properties": { "capabilities": { "properties": { "edit": { "const": "sockets" } } } } },
+      "then": {
+        "anyOf": [{ "required": ["sockets"] }, { "required": ["pivots"] }],
+        "not": { "required": ["params"] }
+      }
+    },
+    {
+      "if": { "properties": { "capabilities": { "properties": { "edit": { "const": "static" } } } } },
+      "then": {
+        "not": { "anyOf": [{ "required": ["params"] }, { "required": ["sockets"] }] }
+      }
+    },
+    {
+      "if": { "properties": { "capabilities": { "properties": { "tick": { "const": true } } } } },
+      "then": { "required": ["entry"] }
+    }
+  ],
+  "$defs": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]([a-z0-9._-]{0,62})$"
+    },
+    "integrity": {
+      "type": "string",
+      "pattern": "^sha256-[A-Za-z0-9+/]{43}=$"
+    },
+    "vec3": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "socket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "pos", "kind"],
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "pos": { "$ref": "#/$defs/vec3" },
+        "normal": { "$ref": "#/$defs/vec3" },
+        "kind": { "enum": ["attachment", "grip", "seat", "mount", "effect"] },
+        "accepts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Advisory tag matching for UI grouping. No solver semantics."
+        }
+      }
+    },
+    "param": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "type", "default"],
+      "properties": {
+        "key": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+        "type": { "enum": ["number", "integer", "boolean", "enum", "color"] },
+        "label": { "type": "string" },
+        "unit": { "enum": ["m", "cm", "mm", "in", "deg", "count", "ratio"] },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "step": { "type": "number", "exclusiveMinimum": 0 },
+        "values": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "default": {
+          "description": "Type-checked here. Membership in [min,max]/values is NOT expressible in JSON Schema and is enforced by conformance C4."
+        },
+        "affects": { "enum": ["geometry", "material", "placement"] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "number" } } },
+          "then": {
+            "required": ["min", "max"],
+            "properties": { "default": { "type": "number" } }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "integer" } } },
+          "then": { "properties": { "default": { "type": "integer" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "boolean" } } },
+          "then": { "properties": { "default": { "type": "boolean" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "enum" } } },
+          "then": {
+            "required": ["values"],
+            "properties": { "default": { "type": "string" } }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "color" } } },
+          "then": { "properties": { "default": { "type": "string" } } }
+        }
+      ]
+    }
+  }
+}

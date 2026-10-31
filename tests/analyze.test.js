@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {analyzeSource} from '../src/analyze.js';
+test('分析常见工厂和外部依赖并提示独立渲染循环',()=>{const result=analyzeSource("import * as THREE from 'three'; export function createModel(){return new THREE.Group()} requestAnimationFrame(loop)");assert.deepEqual(result.factories,['createModel']);assert.deepEqual(result.imports,['three']);assert.equal(result.hasGroup,true);assert.equal(result.warnings.length,1)});

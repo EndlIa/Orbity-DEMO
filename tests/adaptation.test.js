@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {buildAdaptationReport} from '../src/adaptation.js';
+test('报告保留未知单位并明确不是协议清单',()=>{const r=buildAdaptationReport({id:'sample',filename:'x.ts',factory:'create',source:'test',model:{userData:{}}});assert.equal(r.status,'incomplete');assert.ok(r.deferredExtensions.some(x=>x.field==='units'));assert.ok(!r.requiredDecisions.some(x=>x.field==='bounds'));assert.equal(r.spec,undefined);assert.ok(r.limitations[0].includes('不是'))});

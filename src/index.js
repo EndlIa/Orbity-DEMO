@@ -1,0 +1,12 @@
+export {inspectModule, generateAdapter, generateSimpleAppReview} from './adapter-generator.js';
+export {analyzeSource} from './analyze.js';
+export {extractSymbols, findLines} from './code-tools.js';
+export {assessAsset} from './compatibility.js';
+export {buildAdaptationReport} from './adaptation.js';
+export {probeInstances} from './instance-probe.js';
+export {validateManifestDraft, canonicalManifest} from './manifest-review.js';
+export {createModelInstance} from './model-adapter.js';
+export {diffSource, unifiedPatch} from './source-diff.js';
+export {validateManifest, defaults, validateValues} from './spec.js';
+export {createTextureHost} from './texture-host.js';
+export {createDraftZip} from './draft-zip.js';

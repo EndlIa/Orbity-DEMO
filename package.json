@@ -1,0 +1,24 @@
+{
+  "name": "@orbity/core",
+  "version": "0.1.0",
+  "description": "Orbity protocol, deterministic Three.js source analysis and adapter tooling",
+  "type": "module",
+  "license": "UNLICENSED",
+  "exports": {
+    ".": "./src/index.js",
+    "./*": "./src/*"
+  },
+  "bin": {
+    "orbity": "./tools/orbity-cli.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "orbity": "node tools/orbity-cli.js",
+    "pack:check": "npm pack --dry-run"
+  },
+  "dependencies": {
+    "@babel/parser": "^8.0.10",
+    "ajv": "^8.20.0",
+    "three": "0.169.0"
+  }
+}
